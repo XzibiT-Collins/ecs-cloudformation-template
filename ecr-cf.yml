@@ -565,6 +565,9 @@ Resources:
                   - codedeploy:CreateDeployment
                   - codedeploy:GetApplication
                   - codedeploy:GetApplicationRevision
+                  - codedeploy:RegisterApplicationRevision
+                  - codedeploy:GetDeployment
+                  - codedeploy:StopDeployment
                   - codedeploy:GetDeploymentConfig
                 Resource: "*"
               - Effect: Allow
