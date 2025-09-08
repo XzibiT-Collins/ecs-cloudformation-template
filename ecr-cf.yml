@@ -273,38 +273,42 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvironmentName}-GitHubOidcProvider
 
-  # IAM Role for GitHub Actions to push to ECR
-  GitHubActionsRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub ${EnvironmentName}-GitHubActionsRole
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Federated: !Ref GitHubOidcProvider
-            Action: sts:AssumeRoleWithWebIdentity
-            Condition:
-              StringLike:
-                token.actions.githubusercontent.com:sub: !Sub repo:${AllowedGithubRepo}:ref:${AllowedGithubBranch}
-              StringEquals:
-                token.actions.githubusercontent.com:aud: sts.amazonaws.com
-      Path: "/"
-      Policies:
-        - PolicyName: ECRPush
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - ecr:GetAuthorizationToken
-                  - ecr:InitiateLayerUpload
-                  - ecr:UploadLayerPart
-                  - ecr:CompleteLayerUpload
-                  - ecr:PutImage
-                  - ecr:BatchCheckLayerAvailability
-                Resource: !GetAtt ECRRepository.Arn
+# IAM Role for GitHub Actions to push to ECR
+GitHubActionsRole:
+  Type: AWS::IAM::Role
+  Properties:
+    RoleName: !Sub ${EnvironmentName}-GitHubActionsRole
+    AssumeRolePolicyDocument:
+      Version: 2012-10-17
+      Statement:
+        - Effect: Allow
+          Principal:
+            Federated: !Ref GitHubOidcProvider
+          Action: sts:AssumeRoleWithWebIdentity
+          Condition:
+            StringLike:
+              token.actions.githubusercontent.com:sub: !Sub repo:${AllowedGithubRepo}:ref:${AllowedGithubBranch}
+            StringEquals:
+              token.actions.githubusercontent.com:aud: sts.amazonaws.com
+    Path: "/"
+    Policies:
+      - PolicyName: ECRPush
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - ecr:GetAuthorizationToken
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - ecr:InitiateLayerUpload
+                - ecr:UploadLayerPart
+                - ecr:CompleteLayerUpload
+                - ecr:PutImage
+                - ecr:BatchCheckLayerAvailability
+              Resource: !GetAtt ECRRepository.Arn
+
 
   # IAM Role for ECS Task Execution
   ECSTaskExecutionRole:
