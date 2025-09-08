@@ -643,7 +643,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: codepipeline:StartPipelineExecution
-                Resource: !GetAtt CodePipeline.Arn
+                Resource: !Sub !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}
 
   ## EventBridge rule to start pipeline on push to repo
   ECRImagePushEventRule:
