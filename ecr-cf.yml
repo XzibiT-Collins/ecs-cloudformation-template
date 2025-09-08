@@ -498,7 +498,7 @@ Resources:
         TargetGroupInfoList:
           - Name: !GetAtt TargetGroup.TargetGroupName
 
-  # IAM Role for CodePipeline
+  # IAM Role for CodePipeline s
   CodePipelineServiceRole:
     Type: AWS::IAM::Role
     Properties:
