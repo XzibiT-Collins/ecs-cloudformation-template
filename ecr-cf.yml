@@ -430,7 +430,7 @@ Resources:
       Cluster: !Ref ECSCluster
       ServiceName: !Sub ${EnvironmentName}-service
       TaskDefinition: !Ref ECSTaskDefinition
-      DesiredCount: 1
+      DesiredCount: 0   # Set to 0 to prevent Service from starting while there is no image yet
       LaunchType: FARGATE
       DeploymentController:
         Type: CODE_DEPLOY
