@@ -664,7 +664,7 @@ Resources:
           repository-name:
             - !Ref ECRRepository
       Targets:
-        - Arn: !GetAtt CodePipeline.Arn
+        - Arn: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${EnvironmentName}-pipeline
           Id: !Sub ${EnvironmentName}-ecr-image-push-event-rule-target
           RoleArn: !GetAtt EventBridgeInvokeRole.Arn
 
