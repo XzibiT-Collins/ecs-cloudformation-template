@@ -488,16 +488,15 @@ Resources:
       BlueGreenDeploymentConfiguration:
         TerminateBlueInstancesOnDeploymentSuccess:
           Action: TERMINATE
-          TerminationWaitTimeInMinutes: 5   # Terminate after 5 minutes
+          TerminationWaitTimeInMinutes: 5
         DeploymentReadyOption:
           ActionOnTimeout: CONTINUE_DEPLOYMENT
-        LoadBalancerInfo:
-          TargetGroupPairInfoList:
-            - TargetGroups:
-                - Name: !GetAtt TargetGroup.TargetGroupName
-              ProdTrafficRoute:
-                ListenerArns:
-                  - !Ref ALBListener
+      ECSServices:
+        - ServiceName: !Ref ECSService
+          ClusterName: !Ref ECSCluster
+      LoadBalancerInfo:
+        TargetGroupInfoList:
+          - Name: !GetAtt TargetGroup.TargetGroupName
 
   # IAM Role for CodePipeline
   CodePipelineServiceRole:
