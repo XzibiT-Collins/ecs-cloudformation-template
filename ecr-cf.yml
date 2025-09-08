@@ -477,6 +477,8 @@ Resources:
   # CodeDeploy Deployment Group
   CodeDeploymentGroup:
     Type: AWS::CodeDeploy::DeploymentGroup
+    DependsOn:
+      - ECSService
     Properties:
       ApplicationName: !Ref CodeDeployApplication
       DeploymentGroupName: !Sub ${EnvironmentName}-code-deployment-group
