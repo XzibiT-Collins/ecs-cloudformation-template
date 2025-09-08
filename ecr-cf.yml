@@ -577,6 +577,10 @@ Resources:
                   - codedeploy:StopDeployment
                   - codedeploy:GetDeploymentConfig
                 Resource: "*"
+              - Effect:
+                  Action:
+                    - codebuild:BatchGetBuilds
+                    - codebuild:StartBuild
               - Effect: Allow
                 Action:
                   - ecs:DescribeServices
