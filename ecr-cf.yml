@@ -577,6 +577,13 @@ Resources:
                 Action:
                   - iam:PassRole
                 Resource: !GetAtt ECSTaskExecutionRole.Arn
+              - Effect: Allow
+                Action:
+                  - ecr:DescribeImages
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchCheckLayerAvailability
+                Resource: !GetAtt ECRRepository.Arn
 
   # S3 Bucket for Pipeline Artifacts
   ArtifactBucket:
