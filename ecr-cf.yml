@@ -497,6 +497,13 @@ Resources:
                   - cloudwatch:PutMetricAlarm
                   - cloudwatch:DeleteAlarms
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:GetBucketVersioning
+                  - s3:GetBucketLocation
+                Resource: !Sub arn:aws:s3:::${ArtifactBucket}/*
 
     # CodeDeploy Application
   CodeDeployApplication:
