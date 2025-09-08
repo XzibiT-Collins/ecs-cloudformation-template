@@ -404,6 +404,8 @@ Resources:
   # ALB Listener
   ALBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn:
+      - TargetGroup
     Properties:
       LoadBalancerArn: !Ref LoadBalancer
       Port: !Ref AppPort
@@ -421,6 +423,9 @@ Resources:
   # ECS Service
   ECSService:
     Type: AWS::ECS::Service
+    DependsOn:
+      - ALBListener
+      - TargetGroup
     Properties:
       Cluster: !Ref ECSCluster
       ServiceName: !Sub ${EnvironmentName}-service
