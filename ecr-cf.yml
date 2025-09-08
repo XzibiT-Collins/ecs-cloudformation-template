@@ -492,7 +492,7 @@ Resources:
         DeploymentReadyOption:
           ActionOnTimeout: CONTINUE_DEPLOYMENT
       ECSServices:
-        - ServiceName: !Ref ECSService
+        - ServiceName: !Sub ${EnvironmentName}-service
           ClusterName: !Ref ECSCluster
       LoadBalancerInfo:
         TargetGroupInfoList:
@@ -666,7 +666,7 @@ Resources:
     Properties:
       MaxCapacity: 4
       MinCapacity: 1
-      ResourceId: !Sub service/${ECSCluster}/${ECSService}
+      ResourceId: !Sub service/${ECSCluster}/${EnvironmentName}-service
       RoleARN: !GetAtt ApplicationAutoScalingRole.Arn
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
