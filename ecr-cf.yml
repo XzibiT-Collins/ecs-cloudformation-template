@@ -409,13 +409,13 @@ Resources:
       Port: !Ref AppPort
       Protocol: HTTP
       DefaultActions:
-        - Type: fixed-response
-          FixedResponseConfig:
-            StatusCode: 200
-            ContentType: text/plain
-            MessageBody: Hello World
-#        - Type: forward
-#          TargetGroupArn: !Ref TargetGroup
+#        - Type: fixed-response
+#          FixedResponseConfig:
+#            StatusCode: 200
+#            ContentType: text/plain
+#            MessageBody: Hello World
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
 
 
   # ECS Service
