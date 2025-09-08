@@ -663,6 +663,8 @@ Resources:
   ## Application Auto Scaling Group
   ECSScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
+    DependsOn:
+      - ECSService
     Properties:
       MaxCapacity: 4
       MinCapacity: 1
