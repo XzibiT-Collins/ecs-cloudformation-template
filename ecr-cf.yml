@@ -605,11 +605,66 @@ Resources:
       AccessControl: Private
 
 
-  ## CodePipeline
+  # CodeBuild Project to transform ECR artifact into imagedefinitions.json
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${EnvironmentName}-imagedefinitions-builder
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:6.0
+        Type: LINUX_CONTAINER
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - echo "Extracting ImageURI from source JSON..."
+                - IMAGE_URI=$(jq -r '.ImageURI' imagedetail.json)
+                - echo '[{"name":"${EnvironmentName}-container","imageUri":"'"$IMAGE_URI"'"}]' > imagedefinitions.json
+          artifacts:
+            files:
+              - imagedefinitions.json
+
+  # IAM Role for CodeBuild
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${EnvironmentName}-codebuild-service-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CodeBuildPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:GetObjectVersion
+                Resource: arn:aws:s3:::*/*
+
+  # Update CodePipeline to add CodeBuild stage
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: !Sub ${EnvironmentName}-pipeline
       RoleArn: !GetAtt CodePipelineServiceRole.Arn
       ArtifactStore:
         Type: S3
@@ -617,32 +672,46 @@ Resources:
       Stages:
         - Name: Source
           Actions:
-            - Name: Source
+            - Name: ECRSource
               ActionTypeId:
                 Category: Source
                 Owner: AWS
                 Provider: ECR
-                Version: 1
+                Version: "1"
+              OutputArtifacts:
+                - Name: SourceArtifact
               Configuration:
                 RepositoryName: !Ref ECRRepository
                 ImageTag: latest
-              OutputArtifacts:
+
+        - Name: Build
+          Actions:
+            - Name: ConvertToImageDefinitions
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              InputArtifacts:
                 - Name: SourceArtifact
-              RunOrder: 1
+              OutputArtifacts:
+                - Name: ImageDefArtifact
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+
         - Name: Deploy
           Actions:
-            - Name: ECSCodeDeploy
+            - Name: ECSDeploy
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
                 Provider: CodeDeploy
-                Version: 1
+                Version: "1"
+              InputArtifacts:
+                - Name: ImageDefArtifact
               Configuration:
                 ApplicationName: !Ref CodeDeployApplication
                 DeploymentGroupName: !Ref CodeDeploymentGroup
-              InputArtifacts:
-                - Name: SourceArtifact
-              RunOrder: 1
 
   ## IAM Role for EventBridge
   EventBridgeInvokeRole:
