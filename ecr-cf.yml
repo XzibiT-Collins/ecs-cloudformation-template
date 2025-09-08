@@ -520,9 +520,9 @@ Resources:
           TerminationWaitTimeInMinutes: 5
         DeploymentReadyOption:
           ActionOnTimeout: CONTINUE_DEPLOYMENT
-      ECSService:
-        ClusterName: !Ref ECSCluster
-        ServiceName: !Sub ${EnvironmentName}-service
+      ECSServices:
+        - ClusterName: !Ref ECSCluster
+          ServiceName: !Sub ${EnvironmentName}-service
       LoadBalancerInfo:
         TargetGroupPairInfoList:
           - TargetGroups:
