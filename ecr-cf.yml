@@ -388,11 +388,11 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvironmentName}-load-balancer
 
-  # Target Group
-  TargetGroup:
+  # Target Group (Blue)
+  TargetGroupBlue:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub ${EnvironmentName}-target-group
+      Name: !Sub ${EnvironmentName}-tg-blue
       VpcId: !Ref EcsVPC
       Port: !Ref AppPort
       Protocol: HTTP
@@ -401,36 +401,43 @@ Resources:
       HealthCheckPath: /
       HealthCheckPort: traffic-port
 
-  # ALB Listener
+  # Target Group (Green)
+  TargetGroupGreen:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${EnvironmentName}-tg-green
+      VpcId: !Ref EcsVPC
+      Port: !Ref AppPort
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckPort: traffic-port
+
+  # ALB Listener (start by pointing to Blue TG)
   ALBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     DependsOn:
-      - TargetGroup
+      - TargetGroupBlue
     Properties:
       LoadBalancerArn: !Ref LoadBalancer
       Port: !Ref AppPort
       Protocol: HTTP
       DefaultActions:
-#        - Type: fixed-response
-#          FixedResponseConfig:
-#            StatusCode: 200
-#            ContentType: text/plain
-#            MessageBody: Hello World
         - Type: forward
-          TargetGroupArn: !Ref TargetGroup
+          TargetGroupArn: !Ref TargetGroupBlue
 
-
-  # ECS Service
+  # ECS Service (initially attached to Blue TG)
   ECSService:
     Type: AWS::ECS::Service
     DependsOn:
       - ALBListener
-      - TargetGroup
+      - TargetGroupBlue
     Properties:
       Cluster: !Ref ECSCluster
       ServiceName: !Sub ${EnvironmentName}-service
       TaskDefinition: !Ref ECSTaskDefinition
-      DesiredCount: 0   # Set to 0 to prevent Service from starting while there is no image yet
+      DesiredCount: 0   # Safe until image exists
       LaunchType: FARGATE
       DeploymentController:
         Type: CODE_DEPLOY
@@ -445,11 +452,10 @@ Resources:
       LoadBalancers:
         - ContainerName: !Sub ${EnvironmentName}-container
           ContainerPort: !Ref AppPort
-          TargetGroupArn: !Ref TargetGroup
+          TargetGroupArn: !Ref TargetGroupBlue
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName}-service
-
 
   ## IAM Roles for CodeDeploy
   CodeDeployServiceRole:
@@ -465,7 +471,7 @@ Resources:
             Action: sts:AssumeRole
       Path: "/"
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS
+        - arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForECS
 
   # CodeDeploy Application
   CodeDeployApplication:
@@ -482,7 +488,7 @@ Resources:
     Properties:
       ApplicationName: !Ref CodeDeployApplication
       DeploymentGroupName: !Sub ${EnvironmentName}-code-deployment-group
-      DeploymentConfigName: CodeDeployDefault.ECSAllAtOnce    # 100% traffic movement to Blue
+      DeploymentConfigName: CodeDeployDefault.ECSAllAtOnce
       ServiceRoleArn: !GetAtt CodeDeployServiceRole.Arn
       DeploymentStyle:
         DeploymentType: BLUE_GREEN
@@ -493,13 +499,14 @@ Resources:
           TerminationWaitTimeInMinutes: 5
         DeploymentReadyOption:
           ActionOnTimeout: CONTINUE_DEPLOYMENT
-      ECSServices:
-        - ServiceName: !Sub ${EnvironmentName}-service
-          ClusterName: !Ref ECSCluster
+      ECSService:
+        ClusterName: !Ref ECSCluster
+        ServiceName: !Sub ${EnvironmentName}-service
       LoadBalancerInfo:
         TargetGroupPairInfoList:
           - TargetGroups:
-              - Name: !GetAtt TargetGroup.TargetGroupName
+              - Name: !GetAtt TargetGroupBlue.TargetGroupName
+              - Name: !GetAtt TargetGroupGreen.TargetGroupName
             ProdTrafficRoute:
               ListenerArns:
                 - !Ref ALBListener
