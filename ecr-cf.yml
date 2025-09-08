@@ -497,8 +497,12 @@ Resources:
         - ServiceName: !Sub ${EnvironmentName}-service
           ClusterName: !Ref ECSCluster
       LoadBalancerInfo:
-        TargetGroupInfoList:
-          - Name: !GetAtt TargetGroup.TargetGroupName
+        TargetGroupPairInfoList:
+          - TargetGroups:
+              - Name: !GetAtt TargetGroup.TargetGroupName
+            ProdTrafficRoute:
+              ListenerArns:
+                - !Ref ALBListener
 
   # IAM Role for CodePipeline s
   CodePipelineServiceRole:
