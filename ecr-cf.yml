@@ -499,10 +499,7 @@ Resources:
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:GetBucketVersioning
-                  - s3:GetBucketLocation
+                  - s3:*
                 Resource:
                   - !Sub arn:aws:s3:::${ArtifactBucket}
                   - !Sub arn:aws:s3:::${ArtifactBucket}/*
