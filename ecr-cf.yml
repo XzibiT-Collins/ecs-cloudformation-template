@@ -617,6 +617,14 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
       AccessControl: Private
+      
+  # Log group for CodeBuild
+  CodeBuildLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /codebuild/${EnvironmentName}-log-group
+      RetentionInDays: 5
+
 
   CodeBuildRole:
     Type: AWS::IAM::Role
@@ -641,6 +649,12 @@ Resources:
                 Action:
                   - ecs:DescribeTaskDefinition
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/codebuild/${EnvironmentName}-log-group:*
 
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
@@ -651,6 +665,7 @@ Resources:
         Type: CODEPIPELINE
       LogsConfig:
         CloudWatchLogs:
+          Status: ENABLED
           GroupName: !Sub /codebuild/${EnvironmentName}-log-group
           StreamName: !Sub ${EnvironmentName}-build-log
       Environment:
