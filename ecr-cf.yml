@@ -677,6 +677,7 @@ Resources:
             build:
               commands:
                 - echo "Writing appspec.yaml"
+                - echo "Exporting TaskDefinition.json": ${TASK_DEFINITION.Arn}"
                 - |
                   cat > appspec.yaml <<EOL
                   version: 0.0
@@ -684,7 +685,7 @@ Resources:
                     - TargetService:
                         Type: AWS::ECS::Service
                         Properties:
-                          TaskDefinition: "<TASK_DEFINITION>"
+                          TaskDefinition: "${TaskDefinition.Arn}"
                           LoadBalancerInfo:
                             ContainerName: "${EnvironmentName}-container"
                             ContainerPort: ${AppPort}
