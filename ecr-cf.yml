@@ -680,13 +680,13 @@ Resources:
                 - |
                   cat > appspec.json <<EOL
                   {
-                    "version": 1,
+                    "version": 0.0,
                     "Resources": [
                       {
                         "TargetService": {
                           "Type": "AWS::ECS::Service",
                           "Properties": {
-                            "TaskDefinition": "TASK_DEFINITION_PLACEHOLDER",
+                            "TaskDefinition": "<TASK_DEFINITION>",
                             "LoadBalancerInfo": {
                               "ContainerName": "${EnvironmentName}-container",
                               "ContainerPort": ${AppPort}
@@ -697,7 +697,7 @@ Resources:
                     ]
                   }
                   EOL
-    
+      
                 - echo "Exporting taskdef.json"
                 - |
                   cat > taskdef.json <<EOL
@@ -711,7 +711,7 @@ Resources:
                     "containerDefinitions": [
                       {
                         "name": "${EnvironmentName}-container",
-                        "image": "${ECRRepository.RepositoryUri}:latest",
+                        "image": "<IMAGE1_NAME>",
                         "portMappings": [
                           {
                             "containerPort": ${AppPort},
