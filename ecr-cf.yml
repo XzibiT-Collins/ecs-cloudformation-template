@@ -895,10 +895,6 @@ Resources:
 
 ## Outputs
 Outputs:
-  LoadBalancerDns:
-    Description: DNS name of the load balancer
-    Value: !GetAtt LoadBalancer.DNSName
-
   LoadBalancerURL:
     Description: URL of the load balancer
     Value: !Sub http://${LoadBalancer.DNSName}
