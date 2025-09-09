@@ -503,7 +503,9 @@ Resources:
                   - s3:PutObject
                   - s3:GetBucketVersioning
                   - s3:GetBucketLocation
-                Resource: !Sub arn:aws:s3:::${ArtifactBucket}/*
+                Resource:
+                  - !Sub arn:aws:s3:::${ArtifactBucket}
+                  - !Sub arn:aws:s3:::${ArtifactBucket}/*
 
     # CodeDeploy Application
   CodeDeployApplication:
@@ -604,8 +606,114 @@ Resources:
         Status: Enabled
       AccessControl: Private
 
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${EnvironmentName}-codebuild-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Policies:
+        - PolicyName: CodeBuildInline
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecs:DescribeTaskDefinition
+                Resource: "*"
 
-  ## CodePipeline
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${EnvironmentName}-build-project
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:7.0
+        Type: LINUX_CONTAINER
+      Source:
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 10
+      Description: "Generates ECS AppSpec and TaskDef for CodeDeploy ECS Blue/Green"
+      Cache:
+        Type: NO_CACHE
+      BuildSpec: !Sub |
+        version: 0.2
+        phases:
+          build:
+            commands:
+              - echo "Writing appspec.json"
+              - |
+                cat > appspec.json <<EOL
+                {
+                  "version": 1,
+                  "Resources": [
+                    {
+                      "TargetService": {
+                        "Type": "AWS::ECS::Service",
+                        "Properties": {
+                          "TaskDefinition": "TASK_DEFINITION_PLACEHOLDER",
+                          "LoadBalancerInfo": {
+                            "ContainerName": "${EnvironmentName}-container",
+                            "ContainerPort": ${AppPort}
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+                EOL
+  
+              - echo "Exporting taskdef.json"
+              - |
+                cat > taskdef.json <<EOL
+                {
+                  "family": "${EnvironmentName}-task-definition",
+                  "networkMode": "awsvpc",
+                  "requiresCompatibilities": ["FARGATE"],
+                  "cpu": "256",
+                  "memory": "512",
+                  "executionRoleArn": "${ECSTaskExecutionRole.Arn}",
+                  "containerDefinitions": [
+                    {
+                      "name": "${EnvironmentName}-container",
+                      "image": "${ECRRepository.RepositoryUri}:latest",
+                      "portMappings": [
+                        {
+                          "containerPort": ${AppPort},
+                          "protocol": "tcp"
+                        }
+                      ],
+                      "logConfiguration": {
+                        "logDriver": "awslogs",
+                        "options": {
+                          "awslogs-group": "${ECSLogGroup}",
+                          "awslogs-region": "${AWS::Region}",
+                          "awslogs-stream-prefix": "${EnvironmentName}-container-log"
+                        }
+                      }
+                    }
+                  ]
+                }
+                EOL
+        artifacts:
+          files:
+            - appspec.json
+            - taskdef.json
+
+    #################################################################
+    # Pipeline (only modified Stages section)
+    #################################################################
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -629,6 +737,23 @@ Resources:
               OutputArtifacts:
                 - Name: SourceArtifact
               RunOrder: 1
+
+        - Name: Build
+          Actions:
+            - Name: GenerateAppSpecAndTaskDef
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              InputArtifacts:
+                - Name: SourceArtifact
+              OutputArtifacts:
+                - Name: BuildArtifact
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+              RunOrder: 1
+
         - Name: Deploy
           Actions:
             - Name: ECSCodeDeploy
@@ -641,7 +766,7 @@ Resources:
                 ApplicationName: !Ref CodeDeployApplication
                 DeploymentGroupName: !Ref CodeDeploymentGroup
               InputArtifacts:
-                - Name: SourceArtifact
+                - Name: BuildArtifact
               RunOrder: 1
 
   ## IAM Role for EventBridge
