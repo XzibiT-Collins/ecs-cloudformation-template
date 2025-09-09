@@ -676,26 +676,18 @@ Resources:
           phases:
             build:
               commands:
-                - echo "Writing appspec.json"
+                - echo "Writing appspec.yaml"
                 - |
-                  cat > appspec.json <<EOL
-                  {
-                    "version": 0.0,
-                    "Resources": [
-                      {
-                        "TargetService": {
-                          "Type": "AWS::ECS::Service",
-                          "Properties": {
-                            "TaskDefinition": "<TASK_DEFINITION>",
-                            "LoadBalancerInfo": {
-                              "ContainerName": "${EnvironmentName}-container",
-                              "ContainerPort": ${AppPort}
-                            }
-                          }
-                        }
-                      }
-                    ]
-                  }
+                  cat > appspec.yaml <<EOL
+                  version: 0.0
+                  Resources:
+                    - TargetService:
+                        Type: AWS::ECS::Service
+                        Properties:
+                          TaskDefinition: <TASK_DEFINITION>
+                          LoadBalancerInfo:
+                            ContainerName: "${EnvironmentName}-container"
+                            ContainerPort: ${AppPort}
                   EOL
       
                 - echo "Exporting taskdef.json"
@@ -732,7 +724,7 @@ Resources:
                   EOL
           artifacts:
             files:
-              - appspec.json
+              - appspec.yaml
               - taskdef.json
       TimeoutInMinutes: 10
       Description: "Generates ECS AppSpec and TaskDef for CodeDeploy ECS Blue/Green"
