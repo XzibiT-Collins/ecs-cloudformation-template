@@ -581,6 +581,18 @@ Resources:
                 Resource: "*"
               - Effect: Allow
                 Action:
+                  - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuildBatches
+                  - codebuild:StartBuildBatch
+                  - codebuild:BatchGetProjects
+                  - codebuild:StartBuildBatch
+                  - codebuild:CreateReportGroup
+                  - codebuild:CreateReport
+                  - codebuild:UpdateReport
+                Resource: "*"
+              - Effect: Allow
+                Action:
                   - ecs:DescribeServices
                   - ecs:UpdateService
                   - ecs:DescribeTaskDefinition
