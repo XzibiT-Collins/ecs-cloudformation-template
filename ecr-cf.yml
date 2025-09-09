@@ -784,9 +784,6 @@ Resources:
               InputArtifacts:
                 - Name: BuildArtifact
               RunOrder: 1
-    LogConfiguration:
-      LogGroupName: !Sub /codepipeline/${EnvironmentName}-log-group
-      LogStreamName: !Sub ${EnvironmentName}-pipeline-log
 
   ## IAM Role for EventBridge
   EventBridgeInvokeRole:
