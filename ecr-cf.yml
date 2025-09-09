@@ -678,7 +678,7 @@ Resources:
               commands:
                 - echo "Writing appspec.yml"
                 - |
-                  cat > appspec.yaml <<EOL
+                  cat > appspec.yml <<EOL
                   version: 0.0
                   Resources:
                     - TargetService:
