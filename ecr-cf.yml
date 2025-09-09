@@ -643,73 +643,73 @@ Resources:
         Type: LINUX_CONTAINER
       Source:
         Type: CODEPIPELINE
+        BuildSpec: !Sub |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - echo "Writing appspec.json"
+                - |
+                  cat > appspec.json <<EOL
+                  {
+                    "version": 1,
+                    "Resources": [
+                      {
+                        "TargetService": {
+                          "Type": "AWS::ECS::Service",
+                          "Properties": {
+                            "TaskDefinition": "TASK_DEFINITION_PLACEHOLDER",
+                            "LoadBalancerInfo": {
+                              "ContainerName": "${EnvironmentName}-container",
+                              "ContainerPort": ${AppPort}
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                  EOL
+    
+                - echo "Exporting taskdef.json"
+                - |
+                  cat > taskdef.json <<EOL
+                  {
+                    "family": "${EnvironmentName}-task-definition",
+                    "networkMode": "awsvpc",
+                    "requiresCompatibilities": ["FARGATE"],
+                    "cpu": "256",
+                    "memory": "512",
+                    "executionRoleArn": "${ECSTaskExecutionRole.Arn}",
+                    "containerDefinitions": [
+                      {
+                        "name": "${EnvironmentName}-container",
+                        "image": "${ECRRepository.RepositoryUri}:latest",
+                        "portMappings": [
+                          {
+                            "containerPort": ${AppPort},
+                            "protocol": "tcp"
+                          }
+                        ],
+                        "logConfiguration": {
+                          "logDriver": "awslogs",
+                          "options": {
+                            "awslogs-group": "${ECSLogGroup}",
+                            "awslogs-region": "${AWS::Region}",
+                            "awslogs-stream-prefix": "${EnvironmentName}-container-log"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                  EOL
+          artifacts:
+            files:
+              - appspec.json
+              - taskdef.json
       TimeoutInMinutes: 10
       Description: "Generates ECS AppSpec and TaskDef for CodeDeploy ECS Blue/Green"
       Cache:
         Type: NO_CACHE
-      BuildSpec: !Sub |
-        version: 0.2
-        phases:
-          build:
-            commands:
-              - echo "Writing appspec.json"
-              - |
-                cat > appspec.json <<EOL
-                {
-                  "version": 1,
-                  "Resources": [
-                    {
-                      "TargetService": {
-                        "Type": "AWS::ECS::Service",
-                        "Properties": {
-                          "TaskDefinition": "TASK_DEFINITION_PLACEHOLDER",
-                          "LoadBalancerInfo": {
-                            "ContainerName": "${EnvironmentName}-container",
-                            "ContainerPort": ${AppPort}
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-                EOL
-  
-              - echo "Exporting taskdef.json"
-              - |
-                cat > taskdef.json <<EOL
-                {
-                  "family": "${EnvironmentName}-task-definition",
-                  "networkMode": "awsvpc",
-                  "requiresCompatibilities": ["FARGATE"],
-                  "cpu": "256",
-                  "memory": "512",
-                  "executionRoleArn": "${ECSTaskExecutionRole.Arn}",
-                  "containerDefinitions": [
-                    {
-                      "name": "${EnvironmentName}-container",
-                      "image": "${ECRRepository.RepositoryUri}:latest",
-                      "portMappings": [
-                        {
-                          "containerPort": ${AppPort},
-                          "protocol": "tcp"
-                        }
-                      ],
-                      "logConfiguration": {
-                        "logDriver": "awslogs",
-                        "options": {
-                          "awslogs-group": "${ECSLogGroup}",
-                          "awslogs-region": "${AWS::Region}",
-                          "awslogs-stream-prefix": "${EnvironmentName}-container-log"
-                        }
-                      }
-                    }
-                  ]
-                }
-                EOL
-        artifacts:
-          files:
-            - appspec.json
-            - taskdef.json
 
     #################################################################
     # Pipeline (only modified Stages section)
