@@ -709,7 +709,7 @@ Resources:
                         "logConfiguration": {
                           "logDriver": "awslogs",
                           "options": {
-                            "awslogs-group": "${ECSLogGroup}",
+                            "awslogs-group": "/ecs/${EnvironmentName}-log-group",
                             "awslogs-region": "${AWS::Region}",
                             "awslogs-stream-prefix": "${EnvironmentName}-container-log"
                           }
