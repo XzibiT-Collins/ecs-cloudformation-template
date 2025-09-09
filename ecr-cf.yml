@@ -649,6 +649,10 @@ Resources:
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
         Type: CODEPIPELINE
+      LogsConfig:
+        CloudWatchLogs:
+          GroupName: !Sub /codebuild/${EnvironmentName}-log-group
+          StreamName: !Sub ${EnvironmentName}-build-log
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:7.0
@@ -780,6 +784,9 @@ Resources:
               InputArtifacts:
                 - Name: BuildArtifact
               RunOrder: 1
+    LogConfiguration:
+      LogGroupName: !Sub /codepipeline/${EnvironmentName}-log-group
+      LogStreamName: !Sub ${EnvironmentName}-pipeline-log
 
   ## IAM Role for EventBridge
   EventBridgeInvokeRole:
