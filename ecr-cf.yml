@@ -40,7 +40,7 @@ Parameters:
     Description: Application Port
   DeploymentZipFileName:
     Type: String
-    Default: deployment.zip
+    Default: deployment-files.zip
     Description: Deployment Zip File Name
 
 Resources:
