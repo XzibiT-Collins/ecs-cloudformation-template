@@ -574,10 +574,10 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:GetBucketVersioning
-                Resource: "*"
+                  - s3:*
+                Resource:
+                  - !Sub arn:aws:s3:::${ArtifactBucket}
+                  - !Sub arn:aws:s3:::${ArtifactBucket}/*
               - Effect: Allow
                 Action:
                   - codedeploy:CreateDeployment
