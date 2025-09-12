@@ -456,7 +456,7 @@ Resources:
       Cluster: !Ref ECSCluster
       ServiceName: !Sub ${EnvironmentName}-service
       TaskDefinition: !Ref ECSTaskDefinition
-      DesiredCount: 1   # Safe until image exists
+      DesiredCount: 0   # Safe until image exists
       LaunchType: FARGATE
       DeploymentController:
         Type: CODE_DEPLOY
