@@ -503,7 +503,7 @@ Resources:
                 Resource:
                   - !Sub arn:aws:s3:::${ArtifactBucket}
                   - !Sub arn:aws:s3:::${ArtifactBucket}/*
-              - Effect: Allow # <--- Add this section
+              - Effect: Allow
                 Action:
                   - iam:PassRole
                 Resource: !GetAtt ECSTaskExecutionRole.Arn
@@ -918,3 +918,15 @@ Outputs:
   ECSServiceName:
     Description: Name of the ECS Service
     Value: !Ref ECSService
+
+  ECSTaskExecutionRoleArn:
+    Description: ARN of the ECS Task Execution Role
+    Value: !GetAtt ECSTaskExecutionRole.Arn
+
+  ECSContainerName:
+    Description: Name of the ECS Container
+    Value: !Sub ${EnvironmentName}-container
+
+  EnvironmentName:
+    Description: Name of the Environment
+    Value: !Ref EnvironmentName
