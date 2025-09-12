@@ -38,6 +38,10 @@ Parameters:
     Type: Number
     Default: 80
     Description: Application Port
+  DeploymentZipFileName:
+    Type: String
+    Default: deployment.zip
+    Description: Deployment Zip File Name
 
 Resources:
   ## NETWORKING
@@ -584,18 +588,18 @@ Resources:
                   - codedeploy:StopDeployment
                   - codedeploy:GetDeploymentConfig
                 Resource: "*"
-              - Effect: Allow
-                Action:
-                  - codebuild:BatchGetBuilds
-                  - codebuild:StartBuild
-                  - codebuild:BatchGetBuildBatches
-                  - codebuild:StartBuildBatch
-                  - codebuild:BatchGetProjects
-                  - codebuild:StartBuildBatch
-                  - codebuild:CreateReportGroup
-                  - codebuild:CreateReport
-                  - codebuild:UpdateReport
-                Resource: "*"
+#              - Effect: Allow
+#                Action:
+#                  - codebuild:BatchGetBuilds
+#                  - codebuild:StartBuild
+#                  - codebuild:BatchGetBuildBatches
+#                  - codebuild:StartBuildBatch
+#                  - codebuild:BatchGetProjects
+#                  - codebuild:StartBuildBatch
+#                  - codebuild:CreateReportGroup
+#                  - codebuild:CreateReport
+#                  - codebuild:UpdateReport
+#                Resource: "*"
               - Effect: Allow
                 Action:
                   - ecs:DescribeServices
@@ -624,120 +628,120 @@ Resources:
       AccessControl: Private
       
   # Log group for CodeBuild
-  CodeBuildLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /codebuild/${EnvironmentName}-log-group
-      RetentionInDays: 5
-
-
-  CodeBuildRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub ${EnvironmentName}-codebuild-role
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: codebuild.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-        - arn:aws:iam::aws:policy/AmazonS3FullAccess
-      Policies:
-        - PolicyName: CodeBuildInline
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - ecs:DescribeTaskDefinition
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/codebuild/${EnvironmentName}-log-group:*
-
-  CodeBuildProject:
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Name: !Sub ${EnvironmentName}-build-project
-      ServiceRole: !GetAtt CodeBuildRole.Arn
-      Artifacts:
-        Type: CODEPIPELINE
-      LogsConfig:
-        CloudWatchLogs:
-          Status: ENABLED
-          GroupName: !Sub /codebuild/${EnvironmentName}-log-group
-          StreamName: !Sub ${EnvironmentName}-build-log
-      Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:7.0
-        Type: LINUX_CONTAINER
-      Source:
-        Type: CODEPIPELINE
-        BuildSpec: !Sub |
-          version: 0.2
-          phases:
-            build:
-              commands:
-                - echo "Writing appspec.yml"
-                - |
-                  cat > appspec.yml <<EOL
-                  version: 0.0
-                  Resources:
-                    - TargetService:
-                        Type: AWS::ECS::Service
-                        Properties:
-                          TaskDefinition: arn:aws:ecs:eu-central-1:711387109786:task-definition/ecs-stack-task-definition:16
-                          LoadBalancerInfo:
-                            ContainerName: ecs-stack-container
-                            ContainerPort: 80
-                  EOL
-      
-                - echo "Exporting taskdef.json"
-                - |
-                  cat > taskdef.json <<EOL
-                  {
-                    "family": "${EnvironmentName}-task-definition",
-                    "networkMode": "awsvpc",
-                    "requiresCompatibilities": ["FARGATE"],
-                    "cpu": "256",
-                    "memory": "512",
-                    "executionRoleArn": "${ECSTaskExecutionRole.Arn}",
-                    "containerDefinitions": [
-                      {
-                        "name": "${EnvironmentName}-container",
-                        "image": "<IMAGE1_NAME>",
-                        "portMappings": [
-                          {
-                            "containerPort": ${AppPort},
-                            "protocol": "tcp"
-                          }
-                        ],
-                        "logConfiguration": {
-                          "logDriver": "awslogs",
-                          "options": {
-                            "awslogs-group": "/ecs/${EnvironmentName}-log-group",
-                            "awslogs-region": "${AWS::Region}",
-                            "awslogs-stream-prefix": "${EnvironmentName}-container-log"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                  EOL
-          artifacts:
-            files:
-              - appspec.yml
-              - taskdef.json
-      TimeoutInMinutes: 10
-      Description: "Generates ECS AppSpec and TaskDef for CodeDeploy ECS Blue/Green"
-      Cache:
-        Type: NO_CACHE
+#  CodeBuildLogGroup:
+#    Type: AWS::Logs::LogGroup
+#    Properties:
+#      LogGroupName: !Sub /codebuild/${EnvironmentName}-log-group
+#      RetentionInDays: 5
+#
+#
+#  CodeBuildRole:
+#    Type: AWS::IAM::Role
+#    Properties:
+#      RoleName: !Sub ${EnvironmentName}-codebuild-role
+#      AssumeRolePolicyDocument:
+#        Version: 2012-10-17
+#        Statement:
+#          - Effect: Allow
+#            Principal:
+#              Service: codebuild.amazonaws.com
+#            Action: sts:AssumeRole
+#      ManagedPolicyArns:
+#        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+#        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+#      Policies:
+#        - PolicyName: CodeBuildInline
+#          PolicyDocument:
+#            Version: 2012-10-17
+#            Statement:
+#              - Effect: Allow
+#                Action:
+#                  - ecs:DescribeTaskDefinition
+#                Resource: "*"
+#              - Effect: Allow
+#                Action:
+#                  - logs:CreateLogGroup
+#                  - logs:CreateLogStream
+#                  - logs:PutLogEvents
+#                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/codebuild/${EnvironmentName}-log-group:*
+#
+#  CodeBuildProject:
+#    Type: AWS::CodeBuild::Project
+#    Properties:
+#      Name: !Sub ${EnvironmentName}-build-project
+#      ServiceRole: !GetAtt CodeBuildRole.Arn
+#      Artifacts:
+#        Type: CODEPIPELINE
+#      LogsConfig:
+#        CloudWatchLogs:
+#          Status: ENABLED
+#          GroupName: !Sub /codebuild/${EnvironmentName}-log-group
+#          StreamName: !Sub ${EnvironmentName}-build-log
+#      Environment:
+#        ComputeType: BUILD_GENERAL1_SMALL
+#        Image: aws/codebuild/standard:7.0
+#        Type: LINUX_CONTAINER
+#      Source:
+#        Type: CODEPIPELINE
+#        BuildSpec: !Sub |
+#          version: 0.2
+#          phases:
+#            build:
+#              commands:
+#                - echo "Writing appspec.yml"
+#                - |
+#                  cat > appspec.yml <<EOL
+#                  version: 0.0
+#                  Resources:
+#                    - TargetService:
+#                        Type: AWS::ECS::Service
+#                        Properties:
+#                          TaskDefinition: arn:aws:ecs:eu-central-1:711387109786:task-definition/ecs-stack-task-definition:16
+#                          LoadBalancerInfo:
+#                            ContainerName: ecs-stack-container
+#                            ContainerPort: 80
+#                  EOL
+#
+#                - echo "Exporting taskdef.json"
+#                - |
+#                  cat > taskdef.json <<EOL
+#                  {
+#                    "family": "${EnvironmentName}-task-definition",
+#                    "networkMode": "awsvpc",
+#                    "requiresCompatibilities": ["FARGATE"],
+#                    "cpu": "256",
+#                    "memory": "512",
+#                    "executionRoleArn": "${ECSTaskExecutionRole.Arn}",
+#                    "containerDefinitions": [
+#                      {
+#                        "name": "${EnvironmentName}-container",
+#                        "image": "<IMAGE1_NAME>",
+#                        "portMappings": [
+#                          {
+#                            "containerPort": ${AppPort},
+#                            "protocol": "tcp"
+#                          }
+#                        ],
+#                        "logConfiguration": {
+#                          "logDriver": "awslogs",
+#                          "options": {
+#                            "awslogs-group": "/ecs/${EnvironmentName}-log-group",
+#                            "awslogs-region": "${AWS::Region}",
+#                            "awslogs-stream-prefix": "${EnvironmentName}-container-log"
+#                          }
+#                        }
+#                      }
+#                    ]
+#                  }
+#                  EOL
+#          artifacts:
+#            files:
+#              - appspec.yml
+#              - taskdef.json
+#      TimeoutInMinutes: 10
+#      Description: "Generates ECS AppSpec and TaskDef for CodeDeploy ECS Blue/Green"
+#      Cache:
+#        Type: NO_CACHE
 
     #################################################################
     # Pipeline (only modified Stages section)
@@ -757,30 +761,32 @@ Resources:
               ActionTypeId:
                 Category: Source
                 Owner: AWS
-                Provider: ECR
+                Provider: S3
                 Version: 1
               Configuration:
-                RepositoryName: !Ref ECRRepository
-                ImageTag: latest
+                S3Bucket: !Ref ArtifactBucket
+                S3ObjectKey: !Sub ${DeploymentZipFileName}
+#                RepositoryName: !Ref ECRRepository
+#                ImageTag: latest
               OutputArtifacts:
                 - Name: SourceArtifact
               RunOrder: 1
 
-        - Name: Build
-          Actions:
-            - Name: GenerateAppSpecAndTaskDef
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Provider: CodeBuild
-                Version: 1
-              InputArtifacts:
-                - Name: SourceArtifact
-              OutputArtifacts:
-                - Name: BuildArtifact
-              Configuration:
-                ProjectName: !Ref CodeBuildProject
-              RunOrder: 1
+#        - Name: Build
+#          Actions:
+#            - Name: GenerateAppSpecAndTaskDef
+#              ActionTypeId:
+#                Category: Build
+#                Owner: AWS
+#                Provider: CodeBuild
+#                Version: 1
+#              InputArtifacts:
+#                - Name: SourceArtifact
+#              OutputArtifacts:
+#                - Name: BuildArtifact
+#              Configuration:
+#                ProjectName: !Ref CodeBuildProject
+#              RunOrder: 1
 
         - Name: Deploy
           Actions:
@@ -793,8 +799,12 @@ Resources:
               Configuration:
                 ApplicationName: !Ref CodeDeployApplication
                 DeploymentGroupName: !Ref CodeDeploymentGroup
+                TaskDefinitionTemplateArtifact: SourceArtifact
+                TaskDefinitionTemplatePath: taskdef.json
+                AppSpecTemplateArtifact: SourceArtifact
+                AppSpecTemplatePath: appspec.yml
               InputArtifacts:
-                - Name: BuildArtifact
+                - Name: SourceArtifact
               RunOrder: 1
 
   ## IAM Role for EventBridge
