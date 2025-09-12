@@ -308,6 +308,10 @@ Resources:
                   - ecr:PutImage
                   - ecr:BatchCheckLayerAvailability
                 Resource: !GetAtt ECRRepository.Arn
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource: !Sub arn:aws:s3:::${ArtifactBucket}/*
 
 
   # IAM Role for ECS Task Execution
